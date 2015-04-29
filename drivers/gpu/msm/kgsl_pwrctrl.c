@@ -186,7 +186,7 @@ static void _ab_buslevel_update(struct kgsl_pwrctrl *pwr,
 	if (ib == 0)
 		*ab = 0;
 	else if ((!pwr->bus_percent_ab) && (!pwr->bus_ab_mbytes))
-		*ab = ab_votes[last_vote_buslevel];
+		*ab = DEFAULT_BUS_P * ib / 100;
 	else if (pwr->bus_width)
 		*ab = pwr->bus_ab_mbytes;
 	else
