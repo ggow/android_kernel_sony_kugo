@@ -183,6 +183,15 @@ config CPU_FREQ_DEFAULT_GOV_BIOSHOCK
 	help
 	  Default governor of BioShock kernel
 
+config CPU_FREQ_DEFAULT_GOV_CAFACTIVE
+	bool "cafactive"
+	select CPU_FREQ_GOV_CAFACTIVE
+	help
+	  Use the CPUFreq governor 'cafactive' as default. This allows
+	  you to get a full dynamic cpu frequency capable system by simply
+	  loading your cpufreq low-level hardware driver, using the
+	  'cafactive' governor for latency-sensitive workloads.
+
 endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE
@@ -374,6 +383,17 @@ config CPU_FREQ_GOV_BIOSHOCK
 	depends on CPU_FREQ
 	help
 	  'bioshock' - More aggressive version of conservative
+
+config CPU_FREQ_GOV_CAFACTIVE
+	tristate "'cafactive' cpufreq policy governor"
+	help
+	  'cafactive' - CodeAurora(Qualcomm) version of interactive
+	  cpufreq policy governor.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called cpufreq_cafactive.
+
+	  If in doubt, say N.
 
 config CPU_BOOST
 	tristate "Event base short term CPU freq boost"
