@@ -424,6 +424,7 @@ extern struct cpufreq_governor cpufreq_gov_performance;
 #endif
 #ifdef CONFIG_CPU_FREQ_GOV_CAFACTIVE
 extern unsigned int cpufreq_cafactive_get_hispeed_freq(int cpu);
+extern void cafactive_boost_ondemand(int cpu, s64 miliseconds, bool static_switch);
 #endif
 #ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_PERFORMANCE
 #define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_performance)
