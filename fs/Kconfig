@@ -277,6 +277,7 @@ config DYNAMIC_FSYNC
 	bool "dynamic file sync control"
 	default n
 	help
-	  An experimental file sync control using new lcd_notify driver.
+	  An experimental file sync control using new state_notifier. 
+	  This only works if an existing state_notifier driver is already build into the source!
 
 endmenu
