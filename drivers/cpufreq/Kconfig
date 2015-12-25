@@ -156,6 +156,18 @@ config CPU_FREQ_DEFAULT_GOV_IRONACTIVE
 	  is based on the 'interactive' governor with many changes made by
 	  CAF.
 
+config CPU_FREQ_DEFAULT_GOV_SMARTMAX
+	bool "smartmax"
+	select CPU_FREQ_GOV_SMARTMAX
+	help
+	  Use the CPUFreq governor 'smartmax' as default.
+
+config CPU_FREQ_DEFAULT_GOV_SMARTASS2
+	bool "smartassV2"
+	select CPU_FREQ_GOV_SMARTASS2
+	help
+	  Use the CPUFreq governor 'smartass2' as default.
+
 endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE
@@ -311,6 +323,19 @@ config CPU_FREQ_GOV_IRONACTIVE
 	  module will be called cpufreq_ironactive.
 
 	  If in doubt, say N.
+
+config CPU_FREQ_GOV_SMARTMAX
+	tristate "'smartmax' cpufreq governor"
+	depends on CPU_FREQ
+	help
+	  'smartmax' - a "smart" optimized governor!
+	  If in doubt, say N.
+
+config CPU_FREQ_GOV_SMARTASS2
+	tristate "'smartassV2' cpufreq governor"
+	depends on CPU_FREQ
+	help
+	  'smartassV2' - a "smart" governor
 
 config CPU_BOOST
 	tristate "Event base short term CPU freq boost"
