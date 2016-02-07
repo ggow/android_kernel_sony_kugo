@@ -173,44 +173,6 @@ static struct cpufreq_cafactive_tunables *common_tunables;
 
 static struct attribute_group *get_sysfs_attr(void);
 
-static inline cputime64_t get_cpu_idle_time_jiffy(unsigned int cpu,
-						  cputime64_t *wall)
-{
-	u64 idle_time;
-	u64 cur_wall_time;
-	u64 busy_time;
-
-	cur_wall_time = jiffies64_to_cputime64(get_jiffies_64());
-
-	busy_time  = kcpustat_cpu(cpu).cpustat[CPUTIME_USER];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_SYSTEM];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_IRQ];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_SOFTIRQ];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_STEAL];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_NICE];
-
-	idle_time = cur_wall_time - busy_time;
-	if (wall)
-		*wall = jiffies_to_usecs(cur_wall_time);
-
-	return jiffies_to_usecs(idle_time);
-}
-
-static inline cputime64_t get_cpu_idle_time(
-	unsigned int cpu,
-	cputime64_t *wall,
-	bool io_is_busy)
-{
-	u64 idle_time = get_cpu_idle_time_us(cpu, wall);
-
-	if (idle_time == -1ULL)
-		idle_time = get_cpu_idle_time_jiffy(cpu, wall);
-	else if (!io_is_busy)
-		idle_time += get_cpu_iowait_time_us(cpu, wall);
-
-	return idle_time;
-}
-
 /* Round to starting jiffy of next evaluation window */
 static u64 round_to_nw_start(u64 jif,
 			     struct cpufreq_cafactive_tunables *tunables)
@@ -522,7 +484,7 @@ static void __cpufreq_cafactive_timer(unsigned long data, bool is_notif)
 	}
 #endif
 
-	if ((cpu_load >= tunables->go_hispeed_load || tunables->boosted) && !suspended) {
+	if (cpu_load >= tunables->go_hispeed_load || tunables->boosted) {
 		if (pcpu->policy->cur < tunables->hispeed_freq &&
 		    cpu_load <= MAX_LOCAL_LOAD) {
 			new_freq = tunables->hispeed_freq;
