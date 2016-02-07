@@ -1103,5 +1103,10 @@ config FSM9900_GSM_NL
 	  The DIQ functionality is disabled and the UART functionality is enabled.
 	  The serial port connection can be established to communicate with the
 	  GSM NL module.
+	  
+config THUNDERPLUG_CONTROL
+	bool "Enable plugging down/up of cores based on load per core"
+	help
+	  This driver hotplugs cpu cores based on per-core load
 
 endif

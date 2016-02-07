@@ -74,3 +74,5 @@ obj-$(CONFIG_MSM_SMCMOD) += smcmod.o
 obj-$(CONFIG_ARCH_MSM8974) += msm_mpmctr.o
 
 obj-$(CONFIG_PERFMAP) += perfmap.o
+
+obj-$(CONFIG_THUNDERPLUG_CONTROL) += thunderplug.o
