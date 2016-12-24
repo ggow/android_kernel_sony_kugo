@@ -179,9 +179,12 @@ CONFIG_SECURITY_SELINUX_BOOTPARAM_VALUE=1
 CONFIG_SERIAL_CORE_CONSOLE=y
 CONFIG_SERIAL_MSM_HSL_CONSOLE=y
 
-##########################
-#### AndroPlus Kernel ####
-##########################
+###########################
+#### XC Genesis Kernel ####
+###########################
+
+CONFIG_LOCALVERSION="-Genesis-Kernel-v1.01"
+CONFIG_LOCALVERSION_AUTO=n
 
 # Disable unwanted things
 # CONFIG_SECURITY_SONY_RIC is not set
