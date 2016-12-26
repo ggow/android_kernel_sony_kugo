@@ -10,5 +10,5 @@ export PATH=/mnt/data/android/Xperia/aarch64-linux-android-4.9-kernel/bin/:$PATH
 export CROSS_COMPILE=aarch64-linux-android-
 
 export KBUILD_DIFFCONFIG=kugo_diffconfig
-make msm-perf_defconfig O=/mnt/out/kernel-copyleft
-time make -j8 O=/mnt/out/kernel-copyleft
+make msm-perf_defconfig O=/mnt/out/android_kernel_sony_kugo
+time make -j8 O=/mnt/out/android_kernel_sony_kugo
