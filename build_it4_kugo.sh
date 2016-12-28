@@ -18,7 +18,9 @@ echo "building kernel"
 make msm-perf_defconfig O=$outputdir
 time make -j8 O=$outputdir
 
-find $workdir/devices/sony/kugo/ramdisk | cpio -o -H newc | gzip > $outputdir/ramdisk_kugo.cpio.gz
+cd $workdir/devices/$vendor/$device/ramdisk
+find . | cpio -o -H newc | gzip > $outputdir/ramdisk_kugo.cpio.gz
+cd $workdir
 
 echo "checking for compiled kernel..."
 if [ -f $outputdir/arch/arm64/boot/Image.gz-dtb ]
