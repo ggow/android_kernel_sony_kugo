@@ -643,3 +643,14 @@ on property:ro.debuggable=1
 service flash_recovery /system/bin/install-recovery.sh
     class main
     oneshot
+
+on property:sys.boot_completed=1
+    start genesis_script
+
+service genesis_script /sbin/genesis.sh
+    oneshot
+    class late_start
+    user root
+    group root
+    disabled
+    seclabel u:r:init:s0
