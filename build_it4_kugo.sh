@@ -3,7 +3,9 @@
 workdir=$(pwd)
 device=kugo
 vendor=sony
-outputdir=/mnt/out/android_kernel_${vendor}_${device}
+outputfolder=/mnt/out
+outputdir=${outputfolder}/android_kernel_${vendor}_${device}
+
 
 ### GCC 4.9.x
 ### I'm using UBERTC https://bitbucket.org/UBERTC/aarch64-linux-android-4.9-kernel
@@ -14,9 +16,15 @@ export PATH=/mnt/data/android/Xperia/aarch64-linux-android-4.9-kernel/bin/:$PATH
 export CROSS_COMPILE=aarch64-linux-android-
 export KBUILD_DIFFCONFIG=kugo_diffconfig
 
+echo "cleaning build output"
+cd $outputfolder
+rm -rf $outputdir
+mkdir $outputdir
+cd $workdir
+
 echo "building kernel"
 make msm-perf_defconfig O=$outputdir
-time make -j8 O=$outputdir
+time make -j8 O=$outputdir 2>&1 | tee ~/build.log
 
 cd $workdir/devices/$vendor/$device/ramdisk
 find . | cpio -o -H newc | gzip > $outputdir/ramdisk_kugo.cpio.gz
@@ -28,6 +36,9 @@ then
 
     echo "DONE"
 
+    # TBD
+    # mkbootimg is going wrong - needs fixing
+    # temporary workaround is to use mkboot which seems to work fine
     mkbootimg \
     --kernel $outputdir/arch/arm64/boot/Image.gz-dtb \
     --ramdisk $outputdir/ramdisk_kugo.cpio.gz \
@@ -37,6 +48,11 @@ then
     --ramdisk_offset 0x22000000 \
     --tags_offset 0x00000100 \
     --output $outputdir/boot.img
+
+    cd $outputdir
+    mkboot boot.img boot
+    mkboot boot boot.img
+    cd $workdir
 
     ### Version number
 	echo -n "Enter version number: "
