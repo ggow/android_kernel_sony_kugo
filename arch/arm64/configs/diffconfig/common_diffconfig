@@ -183,7 +183,7 @@ CONFIG_SERIAL_MSM_HSL_CONSOLE=y
 #### XC Genesis Kernel ####
 ###########################
 
-CONFIG_LOCALVERSION="-Genesis-Kernel-v1.03"
+CONFIG_LOCALVERSION="-Genesis-Kernel-v1.04"
 CONFIG_LOCALVERSION_AUTO=n
 
 # Disable unwanted things
