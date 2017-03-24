@@ -65,7 +65,8 @@ then
         zip -j $outputdir/XC-GenesisKernel.zip $outputdir/boot.img
 
         ### Copy zip to my desktop
-		dd if=$outputdir/XC-GenesisKernel.zip of=$outputdir/XC-GenesisKernel-v$version.zip
+		dd if=$outputdir/XC-GenesisKernel.zip of=$outputdir/XC-GenesisKernel-v$version-nodrm.zip
         rm $outputdir/XC-GenesisKernel.zip
     fi
 fi
+
