@@ -582,8 +582,12 @@ static int mmc_read_ext_csd(struct mmc_card *card, u8 *ext_csd)
 	if (card->ext_csd.rev >= 6) {
 		card->ext_csd.feature_support |= MMC_DISCARD_FEATURE;
 
-		card->ext_csd.generic_cmd6_time = 10 *
-			ext_csd[EXT_CSD_GENERIC_CMD6_TIME];
+		if (card->cid.manfid == CID_MANFID_HYNIX) {
+			card->ext_csd.generic_cmd6_time = 100;
+		} else {
+			card->ext_csd.generic_cmd6_time = 10 *
+				ext_csd[EXT_CSD_GENERIC_CMD6_TIME];
+		}
 		card->ext_csd.power_off_longtime = 10 *
 			ext_csd[EXT_CSD_POWER_OFF_LONG_TIME];
 

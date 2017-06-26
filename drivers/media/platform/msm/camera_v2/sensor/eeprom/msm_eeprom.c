@@ -634,13 +634,14 @@ static int msm_eeprom_config(struct msm_eeprom_ctrl_t *e_ctrl,
 		cdata->is_supported = e_ctrl->is_supported;
 		length = strlen(e_ctrl->eboard_info->eeprom_name) + 1;
 		if (length > MAX_EEPROM_NAME) {
-			pr_err("%s:%d invalid eeprom_name length %d\n",
+			pr_err("%s:%d invalid eeprom name length %d\n",
 				__func__, __LINE__, (int)length);
 			rc = -EINVAL;
 			break;
 		}
 		memcpy(cdata->cfg.eeprom_name,
-			e_ctrl->eboard_info->eeprom_name, length);
+			e_ctrl->eboard_info->eeprom_name,
+			sizeof(cdata->cfg.eeprom_name));
 		break;
 	case CFG_EEPROM_GET_CAL_DATA:
 		CDBG("%s E CFG_EEPROM_GET_CAL_DATA\n", __func__);
@@ -1396,8 +1397,6 @@ static int eeprom_init_config32(struct msm_eeprom_ctrl_t *e_ctrl,
 		rc = -EINVAL;
 		goto free_mem;
 	}
-
-
 	msm_eeprom_copy_power_settings_compat(
 		power_setting_array,
 		power_setting_array32);
@@ -1476,13 +1475,15 @@ static int msm_eeprom_config32(struct msm_eeprom_ctrl_t *e_ctrl,
 		cdata->is_supported = e_ctrl->is_supported;
 		length = strlen(e_ctrl->eboard_info->eeprom_name) + 1;
 		if (length > MAX_EEPROM_NAME) {
-			pr_err("%s:%d invalid eeprom_name length %d\n",
+			pr_err("%s:%d invalid eeprom name length %d\n",
 				__func__, __LINE__, (int)length);
 			rc = -EINVAL;
 			break;
 		}
+
 		memcpy(cdata->cfg.eeprom_name,
-			e_ctrl->eboard_info->eeprom_name, length);
+			e_ctrl->eboard_info->eeprom_name,
+			sizeof(cdata->cfg.eeprom_name));
 		break;
 	case CFG_EEPROM_GET_CAL_DATA:
 		CDBG("%s E CFG_EEPROM_GET_CAL_DATA\n", __func__);

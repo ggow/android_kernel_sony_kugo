@@ -30,7 +30,7 @@ DECLARE_EVENT_CLASS(lmk_kill,
 
 	TP_STRUCT__entry(
 		__field(int, pid)
-		__field(const char *, comm)
+		__array(char, comm, TASK_COMM_LEN)
 		__field(int, score)
 		__field(int, size)
 		__field(int, gfp_mask)
@@ -38,7 +38,7 @@ DECLARE_EVENT_CLASS(lmk_kill,
 
 	TP_fast_assign(
 		__entry->pid		= pid;
-		__entry->comm		= comm;
+		memcpy(__entry->comm, comm, TASK_COMM_LEN);
 		__entry->score		= score;
 		__entry->size		= size;
 		__entry->gfp_mask	= gfp_mask;

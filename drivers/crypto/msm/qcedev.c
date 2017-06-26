@@ -1782,11 +1782,7 @@ long qcedev_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 		if (is_fips_qcedev_integritytest_done)
 			return -EPERM;
 
-		if (!access_ok(VERIFY_WRITE, (void __user *)arg,
-			sizeof(enum fips_status)))
-			return -EFAULT;
-
-		if (__copy_from_user(&status, (void __user *)arg,
+		if (copy_from_user(&status, (void __user *)arg,
 			sizeof(enum fips_status)))
 			return -EFAULT;
 
@@ -1815,12 +1811,9 @@ long qcedev_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 	case QCEDEV_IOCTL_QUERY_FIPS_STATUS:
 		{
 		enum fips_status status;
-		if (!access_ok(VERIFY_WRITE, (void __user *)arg,
-			sizeof(enum fips_status)))
-			return -EFAULT;
 
 		status = g_fips140_status;
-		if (__copy_to_user((void __user *)arg, &status,
+		if (copy_to_user((void __user *)arg, &status,
 			sizeof(enum fips_status)))
 			return -EFAULT;
 
@@ -2084,9 +2077,9 @@ static ssize_t _debug_stats_read(struct file *file, char __user *buf,
 
 	len = _disp_stats(qcedev);
 
-	rc = simple_read_from_buffer((void __user *) buf, len,
+	if (len <= count)
+		rc = simple_read_from_buffer((void __user *) buf, len,
 			ppos, (void *) _debug_read_buf, len);
-
 	return rc;
 }
 
