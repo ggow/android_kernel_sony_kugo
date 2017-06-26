@@ -1164,7 +1164,10 @@ static void mmc_sd_detect(struct mmc_host *host)
 	BUG_ON(!host->card);
 
 	mmc_rpm_hold(host, &host->card->dev);
-	mmc_claim_host(host);
+	if (!mmc_try_claim_host_delay(host, 2000)) {
+		mmc_rpm_release(host, &host->card->dev);
+		return;
+	}
 
 	/*
 	 * Just check if our card has been removed.

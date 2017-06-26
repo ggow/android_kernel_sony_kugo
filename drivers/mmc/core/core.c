@@ -2033,10 +2033,6 @@ EXPORT_SYMBOL(mmc_start_req);
  */
 void mmc_wait_for_req(struct mmc_host *host, struct mmc_request *mrq)
 {
-#ifdef CONFIG_MMC_BLOCK_DEFERRED_RESUME
-	if (mmc_bus_needs_resume(host))
-		mmc_resume_bus(host);
-#endif
 	__mmc_start_req(host, mrq);
 	mmc_wait_for_req_done(host, mrq);
 }
@@ -2480,6 +2476,30 @@ int __mmc_claim_host(struct mmc_host *host, atomic_t *abort)
 
 EXPORT_SYMBOL(__mmc_claim_host);
 
+int mmc_try_claim_host_delay(struct mmc_host *host, unsigned int delay_ms)
+{
+	int claimed_host = 0;
+	unsigned long flags;
+	int retry_cnt = delay_ms/10;
+
+	do {
+		spin_lock_irqsave(&host->lock, flags);
+		if (!host->claimed || host->claimer == current) {
+			host->claimed = 1;
+			host->claimer = current;
+			host->claim_cnt += 1;
+			claimed_host = 1;
+		}
+		spin_unlock_irqrestore(&host->lock, flags);
+		if (!claimed_host && delay_ms)
+			mmc_delay(10);
+	} while (!claimed_host && retry_cnt--);
+	if (host->ops->enable && claimed_host && host->claim_cnt == 1)
+		host->ops->enable(host);
+	return claimed_host;
+}
+EXPORT_SYMBOL(mmc_try_claim_host_delay);
+
 /**
  *	mmc_try_claim_host - try exclusively to claim a host
  *	@host: mmc host to claim
@@ -2488,20 +2508,7 @@ EXPORT_SYMBOL(__mmc_claim_host);
  */
 int mmc_try_claim_host(struct mmc_host *host)
 {
-	int claimed_host = 0;
-	unsigned long flags;
-
-	spin_lock_irqsave(&host->lock, flags);
-	if (!host->claimed || host->claimer == current) {
-		host->claimed = 1;
-		host->claimer = current;
-		host->claim_cnt += 1;
-		claimed_host = 1;
-	}
-	spin_unlock_irqrestore(&host->lock, flags);
-	if (host->ops->enable && claimed_host && host->claim_cnt == 1)
-		host->ops->enable(host);
-	return claimed_host;
+	return mmc_try_claim_host_delay(host, 0);
 }
 EXPORT_SYMBOL(mmc_try_claim_host);
 
@@ -3246,8 +3253,12 @@ int mmc_resume_bus(struct mmc_host *host)
 	unsigned long flags;
 	int err = 0;
 
-	if (!mmc_bus_needs_resume(host))
+	mmc_claim_host(host);
+
+	if (!mmc_bus_needs_resume(host)) {
+		mmc_release_host(host);
 		return -EINVAL;
+	}
 
 	spin_lock_irqsave(&host->lock, flags);
 	host->bus_resume_flags &= ~MMC_BUSRESUME_NEEDS_RESUME;
@@ -3283,7 +3294,9 @@ int mmc_resume_bus(struct mmc_host *host)
 #endif
 	spin_unlock_irqrestore(&host->lock, flags);
 	mmc_bus_put(host);
+	mmc_release_host(host);
 	mmc_detect_change(host, 0);
+
 	return 0;
 }
 
@@ -5321,6 +5334,7 @@ void mmc_rpm_hold(struct mmc_host *host, struct device *dev)
 		if (pm_runtime_suspended(dev))
 			BUG_ON(1);
 	}
+
 #ifdef CONFIG_MMC_BLOCK_DEFERRED_RESUME
 	if (mmc_bus_manual_resume(host))
 		mmc_resume_bus_sync(host);

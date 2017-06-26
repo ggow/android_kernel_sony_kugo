@@ -1106,7 +1106,7 @@ static ssize_t bs_threshold_write(struct file *file, const char __user *ubuf,
 		bs_det.threshold = threshold;
 
 		if (bs_det.cnt_crash > bs_det.threshold)
-			pr_info("crash_counter is already beyond threshold\n");
+			pr_notice("crash_counter is already beyond threshold\n");
 	} else {
 		pr_err("VideoMode isn't supported\n");
 		ret = -EINVAL;
@@ -1242,7 +1242,7 @@ static void mipi_dsi_panel_create_debugfs(struct msm_fb_data_type *mfd)
 	mdss_dsi_buf_alloc(dev, &debug_tx_buf, ALIGN(DSI_BUF_SIZE, SZ_4K));
 	mdss_dsi_buf_alloc(dev, &debug_rx_buf, ALIGN(DSI_BUF_SIZE, SZ_4K));
 
-	dev_info(dev, "%s: create folder %s\n", __func__,
+	dev_notice(dev, "%s: create folder %s\n", __func__,
 						kobject_name(&dev->kobj));
 
 	root = debugfs_create_dir("mdss_dsi_panel", 0);

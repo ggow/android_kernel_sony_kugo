@@ -2422,10 +2422,12 @@ int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 
 	if (err == 0)
 		goto out_put;
+
 	if (datagrams == 0) {
 		datagrams = err;
 		goto out_put;
 	}
+
 		/*
 		 * We may return less entries than requested (vlen) if the
 		 * sock is non block and there aren't enough datagrams...
@@ -2438,10 +2440,12 @@ int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 			 * app asks about it using getsockopt(SO_ERROR).
 			 */
 			sock->sk->sk_err = -err;
-	}
+		}
+
 out_put:
-	fput_light(sock->file, fput_needed);
-	return datagrams;
+		fput_light(sock->file, fput_needed);
+
+		return datagrams;
 }
 
 SYSCALL_DEFINE5(recvmmsg, int, fd, struct mmsghdr __user *, mmsg,

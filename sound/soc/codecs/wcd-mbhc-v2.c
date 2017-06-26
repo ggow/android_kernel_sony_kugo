@@ -679,7 +679,8 @@ static void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 
 		if (mbhc->impedance_detect &&
 			mbhc->mbhc_cb->compute_impedance &&
-			(mbhc->mbhc_cfg->linein_th != 0)) {
+			(mbhc->mbhc_cfg->linein_th != 0) &&
+			(mbhc->mbhc_cb->hph_pa_on_status(mbhc->codec) == false)) {
 			if (!skip_impdet_retry) {
 				mbhc->mbhc_cb->compute_impedance(mbhc,
 						&mbhc->zl, &mbhc->zr);
