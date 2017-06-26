@@ -866,7 +866,7 @@ enum nl80211_commands {
 
 	NL80211_CMD_SET_QOS_MAP,
 
-	NL80211_CMD_ABORT_SCAN = NL80211_CMD_SET_QOS_MAP + 10,
+	NL80211_CMD_ABORT_SCAN,
 
 	/* add new commands above here */
 

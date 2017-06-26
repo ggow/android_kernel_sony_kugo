@@ -13,7 +13,9 @@
  * drops below 4096 pages and kill processes with a oom_score_adj value of 0 or
  * higher when the free memory drops below 1024 pages.
  *
- * The driver considers memory used for caches to be free.
+ * The driver considers memory used for caches to be free, but if a large
+ * percentage of the cached memory is locked this can be very inaccurate
+ * and processes may not get killed until the normal oom killer is triggered.
  *
  * Copyright (C) 2007-2008 Google, Inc.
  *
@@ -150,6 +152,7 @@ static int lmk_vmpressure_notifier(struct notifier_block *nb,
 	if (pressure >= 95) {
 		other_file = global_page_state(NR_FILE_PAGES) -
 			global_page_state(NR_SHMEM) -
+			global_page_state(NR_UNEVICTABLE) -
 			total_swapcache_pages();
 		other_free = global_page_state(NR_FREE_PAGES);
 
@@ -163,6 +166,7 @@ static int lmk_vmpressure_notifier(struct notifier_block *nb,
 
 		other_file = global_page_state(NR_FILE_PAGES) -
 			global_page_state(NR_SHMEM) -
+			global_page_state(NR_UNEVICTABLE) -
 			total_swapcache_pages();
 
 		other_free = global_page_state(NR_FREE_PAGES);
@@ -458,14 +462,11 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 
 	other_free = global_page_state(NR_FREE_PAGES);
 
-	if (global_page_state(NR_SHMEM) + global_page_state(NR_MLOCK_FILE) +
-		total_swapcache_pages() < global_page_state(NR_FILE_PAGES))
-		other_file = global_page_state(NR_FILE_PAGES) -
-						global_page_state(NR_SHMEM) -
-						global_page_state(NR_MLOCK_FILE) -
-						total_swapcache_pages();
-	else
-		other_file = 0;
+	other_file = global_page_state(NR_FILE_PAGES) -
+		global_page_state(NR_SHMEM) -
+		global_page_state(NR_UNEVICTABLE) -
+		total_swapcache_pages();
+	other_file = (other_file < 0) ? 0 : other_file;
 
 	tune_lmk_param(&other_free, &other_file, sc);
 

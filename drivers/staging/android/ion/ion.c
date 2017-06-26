@@ -438,14 +438,13 @@ int ion_handle_put(struct ion_handle *handle)
 /* Must hold the client lock */
 static void user_ion_handle_get(struct ion_handle *handle)
 {
-	if (handle->user_ref_count++ == 0) {
+	if (handle->user_ref_count++ == 0)
 		kref_get(&handle->ref);
-	}
 }
 
 /* Must hold the client lock */
 static struct ion_handle *user_ion_handle_get_check_overflow
-					(struct ion_handle *handle)
+						(struct ion_handle *handle)
 {
 	if (handle->user_ref_count + 1 == 0)
 		return ERR_PTR(-EOVERFLOW);
@@ -473,9 +472,8 @@ static int user_ion_handle_put_nolock(struct ion_handle *handle)
 {
 	int ret;
 
-	if (--handle->user_ref_count == 0) {
+	if (--handle->user_ref_count == 0)
 		ret = ion_handle_put_nolock(handle);
-	}
 
 	return ret;
 }
@@ -511,7 +509,7 @@ static struct ion_handle *ion_handle_get_by_id_nolock(struct ion_client *client,
 }
 
 struct ion_handle *ion_handle_get_by_id(struct ion_client *client,
-	int id)
+						int id)
 {
 	struct ion_handle *handle;
 
@@ -677,8 +675,7 @@ struct ion_handle *ion_alloc(struct ion_client *client, size_t len,
 }
 EXPORT_SYMBOL(ion_alloc);
 
-static void ion_free_nolock(struct ion_client *client, 
-					struct ion_handle *handle)
+static void ion_free_nolock(struct ion_client *client, struct ion_handle *handle)
 {
 	bool valid_handle;
 
@@ -1588,8 +1585,7 @@ static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		struct ion_handle *handle;
 
 		mutex_lock(&client->lock);
-		handle = ion_handle_get_by_id_nolock(client,
-							data.handle.handle);
+		handle = ion_handle_get_by_id_nolock(client, data.handle.handle);
 		if (IS_ERR(handle)) {
 			mutex_unlock(&client->lock);
 			return PTR_ERR(handle);
