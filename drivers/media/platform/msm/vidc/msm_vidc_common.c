@@ -1294,11 +1294,6 @@ static void handle_sys_error(enum command_response cmd, void *data)
 
 	dprintk(VIDC_WARN, "SYS_ERROR %d received for core %pK\n", cmd, core);
 	msm_comm_clean_notify_client(core);
-
-#ifdef SYSTEM_RESET_WITH_VENUS_CRASH
-	panic("internal panic for Venus SSR\n");
-#endif
-
 	hdev = core->device;
 	mutex_lock(&core->lock);
 	if (core->state == VIDC_CORE_INVALID) {

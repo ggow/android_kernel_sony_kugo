@@ -45,13 +45,17 @@ static int data_ready;
 static int enable_ssr_dump;
 module_param(enable_ssr_dump, int, S_IRUGO | S_IWUSR);
 
+static int bcm_ssr_level;
+module_param(bcm_ssr_level, int, S_IRUGO | S_IWUSR);
+
 void bcm_wlan_ramdump(void *addr, int size)
 {
-	struct ramdump_segment segment;
-
-	segment.v_address = addr;
-	segment.size = (unsigned long)size;
-	do_ramdump(bcm_wlan_dev, &segment, 1);
+	if (enable_ssr_dump) {
+		struct ramdump_segment segment;
+		segment.v_address = addr;
+		segment.size = (unsigned long)size;
+		do_ramdump(bcm_wlan_dev, &segment, 1);
+	}
 
 }
 EXPORT_SYMBOL(bcm_wlan_ramdump);
@@ -60,7 +64,7 @@ void bcm_wlan_crash_reason(char *msg)
 {
 	int ret = 0;
 
-	if (enable_ssr_dump) {
+	if (bcm_ssr_level) {
 		strlcpy(crash_reason, msg,
 					BCM_WLAN_CRASH_REASON_LEN);
 		data_ready = 1;

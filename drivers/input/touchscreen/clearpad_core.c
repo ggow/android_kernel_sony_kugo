@@ -58,7 +58,7 @@
 #define SYN_STRING_LENGTH		128
 #define SYN_RETRY_NUM_OF_INITIAL_CHECK	2
 #define SYN_RETRY_NUM_OF_PROBE		3
-#define SYN_RETRY_NUM_OF_POST_PROBE	3
+#define SYN_RETRY_NUM_OF_POST_PROBE	6
 #define SYN_RETRY_NUM_OF_RECOVERY	3
 #define SYN_RETRY_NUM_OF_RESET		5
 #define SYN_RETRY_NUM			3
@@ -387,26 +387,14 @@ static const char * const clearpad_state_name[] = {
 };
 
 enum clearpad_chip_e {
-	SYN_CHIP_3000	= 0x33,
-	SYN_CHIP_3200	= 0x35,
-	SYN_CHIP_3400	= 0x36,
 	SYN_CHIP_3500	= 0x38,
-	SYN_CHIP_7300	= 0x37,
-	SYN_CHIP_7500	= 0x39,
 	SYN_CHIP_3330	= 0x3A, /* Hybrid incell */
-	SYN_CHIP_3700	= 0x3B, /* Sydney */
 	SYN_CHIP_332U	= 0x40, /* Full incell */
 };
 
 static const char * const clearpad_chip_name[] = {
-	[SYN_CHIP_3000]	= "S3000",
-	[SYN_CHIP_3200]	= "S3200",
-	[SYN_CHIP_3400]	= "S3400",
 	[SYN_CHIP_3500]	= "S3500",
-	[SYN_CHIP_7300]	= "S7300",
-	[SYN_CHIP_7500]	= "S7500",
 	[SYN_CHIP_3330]	= "S3330", /* Hybrid incell */
-	[SYN_CHIP_3700]	= "S3700", /* Sydney */
 	[SYN_CHIP_332U]	= "S332U", /* Full incell */
 };
 
@@ -529,12 +517,6 @@ static const int clearpad_bootloader_version_dec[] = {
 	[BV7]	= 7,
 };
 
-enum clearpad_device_serialization_queries_e {
-	SIZE_OF_DATE_CODE	= 3,
-	SIZE_OF_TESTER_ID	= 2,
-	SIZE_OF_SERIAL_NUMBER	= 2,
-};
-
 enum clearpad_flash_command_e {
 	SYN_FORCE_FLASH,
 	SYN_CONFIG_FLASH,
@@ -632,9 +614,6 @@ struct clearpad_device_info_t {
 	u8 firmware_revision_minor;
 	u8 firmware_revision_extra;
 	u8 analog_id;
-	u8 date[SIZE_OF_DATE_CODE];
-	u8 tester_id[SIZE_OF_TESTER_ID];
-	u8 serial_number[SIZE_OF_SERIAL_NUMBER];
 	u8 product_id[HEADER_PRODUCT_ID_SIZE];
 	u8 boot_loader_version_major;
 	u8 boot_loader_version_minor;
@@ -752,6 +731,7 @@ struct clearpad_cover_t {
 	bool supported;
 	bool status;
 	bool enabled;
+	bool set_disp_size_to_win;
 	int win_top;
 	int win_bottom;
 	int win_right;
@@ -1870,7 +1850,6 @@ static int clearpad_set_cover_status(struct clearpad_t *this)
 		      FEATURE_ENABLE_ENABLE_CLOSED_COVER_DETECTION_MASK);
 		break;
 	case SYN_CHIP_3500:
-	case SYN_CHIP_7500:
 		/* F51_CUSTOM_CTRL05.00: Cover */
 		rc = clearpad_put(SYNF(this, F51_CUSTOM, CTRL, 0x00),
 			 this->cover.status ?
@@ -1899,7 +1878,6 @@ static int clearpad_set_cover_status(struct clearpad_t *this)
 		/* Report Glove As Finger setting is not needed */
 		break;
 	case SYN_CHIP_3500:
-	case SYN_CHIP_7500:
 		/* F12_2D_CTRL23_02: Report As Finger */
 		rc = clearpad_get_block(SYNA(this, F12_2D, CTRL, 23), buf,
 					buf_size);
@@ -1992,6 +1970,16 @@ end:
 	if (rc)
 		LOGE(this, "failed to set cover window");
 	return rc;
+}
+
+/* need LOCK(&this->lock) */
+static void clearpad_set_cover_size(struct clearpad_cover_t *cover,
+		int width, int height)
+{
+	cover->win_left = 0;
+	cover->win_right = width;
+	cover->win_top = 0;
+	cover->win_bottom = height;
 }
 
 /*
@@ -2502,6 +2490,7 @@ static int clearpad_initialize(struct clearpad_t *this)
 	LOGI(this, "initialize device\n");
 
 	/* read device product id */
+	/* F01_RMI_QUERY11: Product ID Query */
 	rc = clearpad_get_block(SYNF(this, F01_RMI, QUERY, 0x0B),
 				product_id, HEADER_PRODUCT_ID_SIZE);
 	if (rc)
@@ -2574,11 +2563,7 @@ static int clearpad_initialize(struct clearpad_t *this)
 		     info->firmware_revision_minor,
 		     info->firmware_revision_extra,
 		     info->analog_id);
-		LOGI(this, "bl %04d-%02d-%02d, tester %d, s/n %d, id '%s'\n",
-		     2000 + info->date[0], info->date[1], info->date[2],
-		     ((int)info->tester_id[0] << 8) + info->tester_id[1],
-		     ((int)info->serial_number[0] << 8)
-		     + info->serial_number[1],
+		LOGI(this, "product id '%s'\n",
 		     clearpad_s(info->product_id, HEADER_PRODUCT_ID_SIZE));
 	}
 
@@ -3356,7 +3341,6 @@ bool clearpad_is_healthy(struct clearpad_t *this)
 		/* fall-through */
 	case SYN_CHIP_3330:
 	case SYN_CHIP_3500:
-	case SYN_CHIP_7500:
 		/* F01_RMI_DATA00: Device Status */
 		rc = clearpad_get(SYNF(this, F01_RMI, DATA, 0x00), &status);
 		if (rc) {
@@ -4835,6 +4819,10 @@ static ssize_t clearpad_state_show(struct device *dev,
 								PAGE_SIZE))
 		snprintf(buf, PAGE_SIZE,
 			"%d", this->cover.win_left);
+	else if (!strncmp(attr->attr.name, __stringify(disp_size_to_cover_win),
+								PAGE_SIZE))
+		snprintf(buf, PAGE_SIZE,
+			"%d", this->cover.set_disp_size_to_win);
 	else if (!strncmp(attr->attr.name, __stringify(stamina_mode),
 								PAGE_SIZE))
 		snprintf(buf, PAGE_SIZE,
@@ -4949,6 +4937,9 @@ succeeded:
 	}
 	HWLOGI(this, "%s : %s\n", NAME_OF(clearpad_calibration_name, mode),
 		     status & need_bit ? "Failed" : "Succeed");
+
+	clearpad_set_delay(20);
+
 end:
 	switch (mode) {
 	case SYN_CALIBRATION_EW:
@@ -5640,6 +5631,67 @@ err_in_check_support:
 	return size;
 }
 
+static ssize_t clearpad_set_disp_size_to_cover_win_store(struct device *dev,
+		struct device_attribute *attr,
+		const char *buf, size_t size)
+{
+	int rc = 0;
+	bool is_disp_size_to_cover_win = !sysfs_streq(buf, "0");
+	struct clearpad_t *this = dev_get_drvdata(dev);
+	const char *session = "set_disp_size_to_cover_win";
+
+	if (!this->cover.supported) {
+		LOGI(this, "cover mode is not supported");
+		return size;
+	}
+
+	if (is_disp_size_to_cover_win) {
+		int width = this->extents.preset_x_max + 1;
+		int height = this->extents.preset_y_max + 1;
+
+		LOGI(this,
+			"set display resolution (%d, %d) to cover window size.",
+			width, height);
+
+		LOCK(&this->lock);
+		clearpad_set_cover_size(&this->cover, width, height);
+		this->cover.set_disp_size_to_win = true;
+	} else {
+		LOCK(&this->lock);
+		this->cover.set_disp_size_to_win = false;
+	}
+	UNLOCK(&this->lock);
+
+	if (!this->post_probe.done) {
+		LOGI(this, "post_probe hasn't finished, will apply later\n");
+		return size;
+	}
+
+	if (!this->dev_active || this->interrupt.count == 0) {
+		LOGI(this, "avoid to access I2C before waiting %d ms delay\n",
+			this->reset.delay_for_powerup_ms);
+		return size;
+	}
+
+	rc = clearpad_ctrl_session_begin(this, session);
+	if (rc) {
+		LOGI(this, "not powered, will be applied later\n");
+		return size;
+	}
+
+	LOCK(&this->lock);
+	if (this->cover.enabled)
+		rc = clearpad_set_cover_window(this);
+	UNLOCK(&this->lock);
+
+	if (rc)
+		LOGE(this, "failed to set cover window for device\n");
+
+	clearpad_ctrl_session_end(this, session);
+
+	return size;
+}
+
 static ssize_t clearpad_cover_win_store(struct device *dev,
 		struct device_attribute *attr,
 		const char *buf, size_t size)
@@ -5831,6 +5883,9 @@ static struct device_attribute clearpad_sysfs_attrs[] = {
 	__ATTR(cover_mode_enabled, S_IRUGO | S_IWUSR,
 				clearpad_state_show,
 				clearpad_cover_mode_enabled_store),
+	__ATTR(cover_win_set_disp_size, S_IRUGO | S_IWUSR,
+				clearpad_state_show,
+				clearpad_set_disp_size_to_cover_win_store),
 	__ATTR(cover_win_top, S_IRUGO | S_IWUSR,
 				clearpad_state_show,
 				clearpad_cover_win_store),
@@ -6523,7 +6578,6 @@ static void clearpad_analog_test(struct clearpad_t *this,
 	/* Handle unsupported test report */
 	switch (this->chip_id) {
 	case SYN_CHIP_3500:
-	case SYN_CHIP_7500:
 		switch (mode) {
 		case F54_16_IMAGE_REPORT:
 		case F54_AUTOSCAN_REPORT:
@@ -6789,7 +6843,7 @@ static void clearpad_analog_test(struct clearpad_t *this,
 		goto err_set_irq_xy;
 	}
 
-	data = devm_kzalloc(&this->pdev->dev, loop_count_j * data_size,
+	data = devm_kzalloc(&this->pdev->dev, loop_count_i * loop_count_j * data_size,
 							   GFP_KERNEL);
 	if (!data)
 		goto err_set_irq_xy;
@@ -6840,32 +6894,31 @@ static void clearpad_analog_test(struct clearpad_t *this,
 		rc = clearpad_put(SYNF(this, F54_ANALOG, DATA, 0x02), 0x00);
 		if (rc)
 			goto err_reset;
+		clearpad_set_delay(20);
+		rc = clearpad_get_block(
+			SYNF(this, F54_ANALOG, DATA, 0x03),
+				data, loop_count_i * loop_count_j * data_size);
+		if (rc)
+			goto err_reset;
 		for (i = 0; i < loop_count_i; i++) {
-			for (j = 0; j < loop_count_j * data_size; j++) {
-				rc = clearpad_get(
-					SYNF(this, F54_ANALOG, DATA, 0x03),
-								data + j);
-				if (rc)
-					goto err_reset;
-			}
 			pl = line;
 			for (j = 0; j < loop_count_j; j++) {
 				s64 val = 0;
 
 				switch (data_type) {
 				case HWTEST_U8:
-					val = (u8)(*(data + j));
+					val = (u8)(*(data + (i * loop_count_j) + j));
 					break;
 				case HWTEST_S8:
-					val = (s8)(*(data + j));
+					val = (s8)(*(data + (i * loop_count_j) + j));
 					break;
 				case HWTEST_S16:
 					val = (s16)le16_to_cpup(
-					(const u16 *)(data + j * data_size));
+					(const u16 *)(data + ((i * loop_count_j) + j) * data_size));
 					break;
 				case HWTEST_U32:
 					val = (u32)le32_to_cpup(
-					(const u32 *)(data + j * data_size));
+					(const u32 *)(data + ((i * loop_count_j) + j) * data_size));
 					break;
 				default:
 					break;
@@ -7256,7 +7309,7 @@ reg_F12_2D:
 		 SYNA(this, F12_2D, QUERY, 0), buf, 1);
 
 	/* F12_2D_QUERY10: Supported Object Types */
-	if (this->chip_id == SYN_CHIP_3330 || this->chip_id == SYN_CHIP_7500) {
+	if (this->chip_id == SYN_CHIP_3330) {
 		if (clearpad_debug_print_reg(
 			"F12_2D_QUERY10: Supported Object Types",
 			SYNA(this, F12_2D, QUERY, 10), buf, 1) == 0) {
@@ -7591,10 +7644,12 @@ static void clearpad_debug_info(struct clearpad_t *this)
 	HWLOGI(this, "[glove] supported=%s enabled=%s\n",
 	       this->glove.supported ? "true" : "false",
 	       this->glove.enabled ? "true" : "false");
-	HWLOGI(this, "[cover] supported=%s status=%s enabled=%s\n",
+	HWLOGI(this, "[cover] supported=%s status=%s enabled=%s "
+		"set_disp_size_to_win=%s\n",
 	       this->cover.supported ? "true" : "false",
 	       this->cover.status ? "true" : "false",
-	       this->cover.enabled ? "true" : "false");
+	       this->cover.enabled ? "true" : "false",
+	       this->cover.set_disp_size_to_win ? "true" : "false");
 	HWLOGI(this, INDENT "win top=%d bottom=%d right=%d left=%d\n",
 	       this->cover.win_top, this->cover.win_bottom,
 	       this->cover.win_right, this->cover.win_left);
@@ -7864,11 +7919,6 @@ static ssize_t clearpad_debug_hwtest_write(struct file *file,
 			touchctrl_unlock_power(this, __func__);
 			UNLOCK(&this->lock);
 		}
-		break;
-	case DEBUG_COMMAND('X', 'P'):
-		/* XP - start post probe */
-		HWLOGW(this, "ignore XP command to support sysfs"
-		       "for starting post_plobe\n");
 		break;
 	case DEBUG_COMMAND('X', 'W'):
 		/* XW[number:interval(ms)] - watchdog (0:stop, else:start) */

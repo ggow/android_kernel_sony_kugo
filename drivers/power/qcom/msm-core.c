@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -440,7 +440,8 @@ static long msm_core_ioctl(struct file *file, unsigned int cmd,
 	struct cpu_activity_info *node = NULL;
 	struct sched_params __user *argp = (struct sched_params __user *)arg;
 	int i, cpu = num_possible_cpus();
-	int mpidr, cluster, cpumask;
+	int mpidr;
+	int cluster, cpumask;
 
 	if (!argp)
 		return -EINVAL;
