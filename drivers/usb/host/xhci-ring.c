@@ -3477,23 +3477,6 @@ int xhci_queue_bulk_tx(struct xhci_hcd *xhci, gfp_t mem_flags,
 		} else
 			field |= ep_ring->cycle_state;
 
-<<<<<<< HEAD
-=======
-		/* Chain all the TRBs together; clear the chain bit in the last
-		 * TRB to indicate it's the last TRB in the chain.
-		 */
-		if (num_trbs > last_trb_num) {
-			field |= TRB_CHAIN;
-		} else if (num_trbs == last_trb_num) {
-			td->last_trb = ep_ring->enqueue;
-			field |= TRB_IOC;
-		} else if (zero_length_needed && num_trbs == 1) {
-			trb_buff_len = 0;
-			urb_priv->td[1]->last_trb = ep_ring->enqueue;
-			field |= TRB_IOC;
-		}
-
->>>>>>> v3.10.91
 		/* Only set interrupt on short packet for IN endpoints */
 		if (usb_urb_dir_in(urb))
 			field |= TRB_ISP;
