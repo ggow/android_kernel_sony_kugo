@@ -61,11 +61,11 @@ then
     if [ -e $outputdir/boot.img ]
 	then
 
-        cp $workdir/devices/$vendor/$device/XC-GenesisKernel.zip $outputdir
-        zip -j $outputdir/XC-GenesisKernel.zip $outputdir/boot.img
+        cp $workdir/devices/$vendor/$device/$device-GenesisKernel.zip $outputdir
+        zip -j $outputdir/$device-GenesisKernel.zip $outputdir/boot.img
 
         ### Copy zip to my desktop
-		dd if=$outputdir/XC-GenesisKernel.zip of=$outputdir/XC-GenesisKernel-v$version.zip
-        rm $outputdir/XC-GenesisKernel.zip
+		dd if=$outputdir/$device-GenesisKernel.zip of=$outputdir/$device-GenesisKernel-v$version.zip
+        rm $outputdir/$device-GenesisKernel.zip
     fi
 fi
