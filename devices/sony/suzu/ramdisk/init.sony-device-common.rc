@@ -1,0 +1,51 @@
+# Copyright (c) 2014 Sony Mobile Communications Inc.
+#
+# product common configuration
+#
+import init.sony-platform.rc
+
+on init
+    write /sys/devices/soc.0/7864900.sdhci/mmc_host/mmc1/clkgate_delay 1
+
+on boot
+    chown cameraserver system /sys/class/leds/led:flash_0/brightness
+    chown cameraserver system /sys/class/leds/led:flash_1/brightness
+    chown cameraserver system /sys/class/leds/led:torch_0/brightness
+    chown cameraserver system /sys/class/leds/led:torch_1/brightness
+    chown cameraserver system /sys/class/leds/led:switch/brightness
+    chown cameraserver system /sys/class/leds/led:switch/strobe
+    chown cameraserver system /sys/class/leds/led:switch/duration
+    chown cameraserver system /sys/class/leds/led:switch/fault_status
+
+# Cover mode
+    chown system system /sys/devices/virtual/input/clearpad/cover_mode_enabled
+    chown system system /sys/devices/virtual/input/clearpad/cover_win_bottom
+    chown system system /sys/devices/virtual/input/clearpad/cover_win_left
+    chown system system /sys/devices/virtual/input/clearpad/cover_win_right
+    chown system system /sys/devices/virtual/input/clearpad/cover_win_top
+
+# Touch
+on property:persist.sys.touch.easywakeup=0
+    write /sys/devices/virtual/input/clearpad/wakeup_gesture 0
+
+on property:persist.sys.touch.easywakeup=1
+    write /sys/devices/virtual/input/clearpad/wakeup_gesture 1
+
+on property:persist.sys.touch.glove_mode=0
+    write /sys/devices/virtual/input/clearpad/glove 0
+
+on property:persist.sys.touch.glove_mode=1
+    write /sys/devices/virtual/input/clearpad/glove 1
+
+on property:sys.cover_state=0
+    write /sys/devices/virtual/input/clearpad/cover_status 0
+
+on property:sys.cover_state=1
+    write /sys/devices/virtual/input/clearpad/cover_status 1
+
+# Start Key Provision daemon
+service keyprovd /system/bin/keyprovd
+    user system
+    group system
+    oneshot
+    class late_start

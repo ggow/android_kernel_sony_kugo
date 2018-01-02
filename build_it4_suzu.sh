@@ -1,7 +1,7 @@
 #!/bin/bash
 
 workdir=$(pwd)
-device=kugo
+device=suzu
 vendor=sony
 outputfolder=/mnt/out
 outputdir=${outputfolder}/android_kernel_${vendor}_${device}
@@ -14,7 +14,7 @@ export PATH=/mnt/data/android/Xperia/aarch64-linux-android-4.9-kernel/bin/:$PATH
 
 ### See prefix of file names in the toolchain's bin directory
 export CROSS_COMPILE=aarch64-linux-android-
-export KBUILD_DIFFCONFIG=kugo_diffconfig
+export KBUILD_DIFFCONFIG=suzu_diffconfig
 
 echo "cleaning build output"
 cd $outputfolder
@@ -27,7 +27,7 @@ make msm-perf_defconfig O=$outputdir
 time make -j8 O=$outputdir 2>&1 | tee ~/build.log
 
 cd $workdir/devices/$vendor/$device/ramdisk
-find . | cpio -o -H newc | gzip > $outputdir/ramdisk_kugo.cpio.gz
+find . | cpio -o -H newc | gzip > $outputdir/ramdisk_suzu.cpio.gz
 cd $workdir
 
 echo "checking for compiled kernel..."
@@ -41,7 +41,7 @@ then
     # temporary workaround is to use mkboot which seems to work fine
     mkbootimg \
     --kernel $outputdir/arch/arm64/boot/Image.gz-dtb \
-    --ramdisk $outputdir/ramdisk_kugo.cpio.gz \
+    --ramdisk $outputdir/ramdisk_suzu.cpio.gz \
     --cmdline "androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 androidboot.bootdevice=7824900.sdhci lpm_levels.sleep_disabled=1 zram.backend=z3fold earlyprintk" \
     --base 0x00000000 \
     --pagesize 4096 \
@@ -69,4 +69,3 @@ then
         rm $outputdir/$device-GenesisKernel.zip
     fi
 fi
-
