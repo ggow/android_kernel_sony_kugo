@@ -252,6 +252,7 @@ on boot
 
     # SONY: Enable Sony RIC
     mount securityfs securityfs /sys/kernel/security nosuid nodev noexec
+    write /sys/kernel/security/sony_ric/enable 0
     chmod 0640 /sys/kernel/security/sony_ric/enable
 
     # SONY: for Bluesleep
@@ -479,11 +480,11 @@ service ssuiccd /system/bin/ssuiccd
     socket ssuiccd stream 0666 smartcard smartcard
 
 # Start RIC
-service ric /sbin/ric
-    user root
-    group root drmrpc trimarea system
-    class main
-    seclabel u:r:ric:s0
+#service ric /sbin/ric
+#    user root
+#    group root drmrpc trimarea system
+#    class main
+#    seclabel u:r:ric:s0
 
 
 
