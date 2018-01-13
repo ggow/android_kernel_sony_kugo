@@ -35,6 +35,9 @@ on early-init
     symlink /data/tombstones /tombstones
     mkdir /dsp 0771 media media
 
+on post-fs
+    export LD_PRELOAD libdrmfix.so
+
 on fs
     wait /dev/block/bootdevice
 
