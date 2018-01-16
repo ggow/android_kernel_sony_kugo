@@ -65,7 +65,7 @@ then
         zip -j $outputdir/$device-GenesisKernel.zip $outputdir/boot.img
 
         ### Copy zip to my desktop
-		dd if=$outputdir/$device-GenesisKernel.zip of=$outputdir/$device-GenesisKernel-v$version.zip
+		dd if=$outputdir/$device-GenesisKernel.zip of=$outputdir/$device-GenesisKernel-v$version-nodrm.zip
         rm $outputdir/$device-GenesisKernel.zip
     fi
 fi
